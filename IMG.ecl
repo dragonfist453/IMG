@@ -2,7 +2,7 @@ EXPORT IMG := MODULE
     //IMG module to work with image datasets
     
     //General format of MNIST images
-    IMG_FORMAT_MNIST := RECORD
+    SHARED IMG_FORMAT_MNIST := RECORD
         UNSIGNED id;
         DATA image;
     END;
@@ -40,32 +40,6 @@ EXPORT IMG := MODULE
         RETURN outRecs;                            
     END;
 
-    //Format for labels
-    LABEL_FORMAT_MNIST := RECORD
-        UNSIGNED id;
-        DATA1 label;
-    END;
-
-    //Extract MNIST training labels and export
-    EXPORT LABEL_FORMAT_MNIST MNIST_train_label() := FUNCTION
-        numImages := 60000;
-
-        MNIST_FORMAT := RECORD
-            DATA4 magic;
-            DATA4 numImages;
-            DATA60000 contents;
-        END;
-
-        mnist_labels := DATASET('~test::mnist_train_labelled',MNIST_FORMAT,FLAT);
-
-        outRecs0 := NORMALIZE(mnist_labels, numImages, TRANSFORM(LABEL_FORMAT_MNIST, 
-                                            SELF.label := LEFT.contents[COUNTER],
-                                            SELF.id := COUNTER;));
-
-        outRecs := DISTRIBUTE(outRecs0,id);
-        RETURN outRecs;
-    END;
-
     //Extract MNIST test images and export
     EXPORT IMG_FORMAT_MNIST MNIST_test_image() := FUNCTION
         numImages := 10000;
@@ -99,8 +73,34 @@ EXPORT IMG := MODULE
         RETURN outRecs;                            
     END;
 
+    //Format for labels
+    SHARED LABEL_FORMAT_MNIST := RECORD
+        UNSIGNED id;
+        DATA1 label;
+    END;
+
     //Extract MNIST training labels and export
-    EXPORT LABEL_FORMAT MNIST_test_label() := FUNCTION
+    EXPORT LABEL_FORMAT_MNIST MNIST_train_label() := FUNCTION
+        numImages := 60000;
+
+        MNIST_FORMAT := RECORD
+            DATA4 magic;
+            DATA4 numImages;
+            DATA60000 contents;
+        END;
+
+        mnist_labels := DATASET('~test::mnist_train_labelled',MNIST_FORMAT,FLAT);
+
+        outRecs0 := NORMALIZE(mnist_labels, numImages, TRANSFORM(LABEL_FORMAT_MNIST, 
+                                            SELF.label := LEFT.contents[COUNTER],
+                                            SELF.id := COUNTER;));
+
+        outRecs := DISTRIBUTE(outRecs0,id);
+        RETURN outRecs;
+    END;
+
+    //Extract MNIST training labels and export
+    EXPORT LABEL_FORMAT_MNIST MNIST_test_label() := FUNCTION
         numImages := 10000;
 
         MNIST_FORMAT := RECORD
@@ -120,14 +120,17 @@ EXPORT IMG := MODULE
     END;
 
     //General format of images
-    IMG_FORMAT := RECORD
+    SHARED IMG_FORMAT := RECORD
         STRING filename;
         DATA image;
         UNSIGNED4 RecPos{virtual(fileposition)};
     END;
 
-    //Read image data from a logical file. TBD. Try finishing when less sleepy
+    //Read image data from a logical file.
     EXPORT IMG_FORMAT ReadImage(STRING filename) := FUNCTION
         imageData := DATASET(filename, IMG_FORMAT, FLAT);
+        return imageData;
     END;    
+
+    //Write image data into a given logical file.
 END;    
