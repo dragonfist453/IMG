@@ -161,8 +161,8 @@ EXPORT IMG := MODULE
         RETURN tens;
     END;    
 
-    //Take from JPG image dataset to convert to tensor
-    EXPORT DATASET(TensData) JpgtoTens(DATASET(IMG_NUMERICAL) imgDataset) := FUNCTION
+    //Take from dataset of images to convert to tensor
+    EXPORT DATASET(TensData) ImgtoTens(DATASET(IMG_NUMERICAL) imgDataset) := FUNCTION
         SET OF INTEGER GetImageDimensions(DATA image) := EMBED(Python)
             import cv2
             import numpy as np 

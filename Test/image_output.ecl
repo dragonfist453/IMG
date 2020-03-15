@@ -13,7 +13,7 @@ numClasses := 10;
 batchSize := 128;
 
 //Take MNIST dataset using IMG module
-images := IMG.ReadImage('~test::mnist_train_images');
+images := IMG.ReadImage('~thor::whatever::images');
 
 image_tens := IMG.ImgtoTens(images);
 
