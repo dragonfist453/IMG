@@ -1,3 +1,7 @@
+IMPORT Python3 as Python;
+IMPORT GNN.Tensor;
+TensData := Tensor.R4.TensData;
+
 EXPORT IMG := MODULE
     //IMG module to work with image datasets
     
@@ -8,7 +12,7 @@ EXPORT IMG := MODULE
     END;
 
     //Read MNIST training set from ubyte file
-    EXPORT IMG_FORMAT_MNIST MNIST_train_image() := FUNCTION
+    EXPORT DATASET(IMG_FORMAT_MNIST) MNIST_train_image() := FUNCTION
         numImages := 60000;
         numRows := 28;
         numCols := 28;
@@ -41,7 +45,7 @@ EXPORT IMG := MODULE
     END;
 
     //Extract MNIST test images and export
-    EXPORT IMG_FORMAT_MNIST MNIST_test_image() := FUNCTION
+    EXPORT DATASET(IMG_FORMAT_MNIST) MNIST_test_image() := FUNCTION
         numImages := 10000;
         numRows := 28;
         numCols := 28;
@@ -80,7 +84,7 @@ EXPORT IMG := MODULE
     END;
 
     //Extract MNIST training labels and export
-    EXPORT LABEL_FORMAT_MNIST MNIST_train_label() := FUNCTION
+    EXPORT DATASET(LABEL_FORMAT_MNIST) MNIST_train_label() := FUNCTION
         numImages := 60000;
 
         MNIST_FORMAT := RECORD
@@ -100,7 +104,7 @@ EXPORT IMG := MODULE
     END;
 
     //Extract MNIST training labels and export
-    EXPORT LABEL_FORMAT_MNIST MNIST_test_label() := FUNCTION
+    EXPORT DATASET(LABEL_FORMAT_MNIST) MNIST_test_label() := FUNCTION
         numImages := 10000;
 
         MNIST_FORMAT := RECORD
@@ -123,14 +127,59 @@ EXPORT IMG := MODULE
     SHARED IMG_FORMAT := RECORD
         STRING filename;
         DATA image;
-        UNSIGNED4 RecPos{virtual(fileposition)};
+    END;
+
+    SHARED IMG_NUMERICAL := RECORD
+        UNSIGNED8 id;
+        DATA image;
     END;
 
     //Read image data from a logical file.
-    EXPORT IMG_FORMAT ReadImage(STRING filename) := FUNCTION
+    EXPORT DATASET(IMG_NUMERICAL) ReadImage(STRING filename) := FUNCTION
         imageData := DATASET(filename, IMG_FORMAT, FLAT);
-        return imageData;
+        numImages := COUNT(imageData);
+
+        imageNumerical := NORMALIZE(imageData, numImages, TRANSFORM(IMG_NUMERICAL,
+                                                        SELF.id := COUNTER,
+                                                        SELF.image := LEFT.image
+                                                        ));
+
+        return imageNumerical;
     END;    
 
-    //Write image data into a given logical file.
-END;    
+    //Take from JPG image dataset to convert to tensor
+    EXPORT DATASET(TensData) JpgtoTens(DATASET(IMG_NUMERICAL) imgDataset) := FUNCTION
+        SET OF INTEGER GetImageDimensions(DATA image) := EMBED(Python)
+            import cv2
+            import numpy as np 
+
+            nparr = np.frombuffer(bytes(image), np.uint8)
+            img_np = cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE)
+
+            return list(img_np.shape);
+        ENDEMBED;
+
+        //Get image shape set
+        imgShape := GetImageDimensions(imgDataset[1].image);
+        
+        //Put them into the subsequent variables
+        imgRows := imgShape[1];
+        imgCols := imgShape[2];
+
+        //Calculate size to iterate
+        imgSize := imgRows * imgCols;
+
+        //Build tensor data
+        tens := NORMALIZE(imgDataset, imgSize, TRANSFORM(TensData,
+                            SELF.indexes := [LEFT.id, (COUNTER-1) DIV imgCols+1, (COUNTER-1) % imgCols +1, 1],
+                            SELF.value := ( (REAL) (>UNSIGNED1<) LEFT.image[counter] )/127.5 - 1 ));
+        RETURN tens;                    
+    END;
+
+    /*
+    //Convert tensor data output to Image to send to logical file
+    EXPORT DATASET(IMG_NUMERICAL) TenstoJpg(DATASET(TensData) tens) := FUNCTION
+
+    END;
+    */
+END; 

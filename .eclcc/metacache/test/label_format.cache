@@ -1,0 +1,6 @@
+<Cache hash="-6229868875486127407">
+<Attr module="Test" name="label_format">
+ <Depend module="" name="img"/>
+ <Depend module="_versions.IMG.V0_6_0.IMG" name="img"/>
+</Attr>
+</Cache>
