@@ -145,6 +145,20 @@ EXPORT IMG := MODULE
                                                         ));
 
         return imageNumerical;
+    END;
+
+    //Take from MNIST image dataset to convert to tensor
+    EXPORT DATASET(Tensdata) MNISTtoTens(DATASET(IMG_FORMAT_MNIST) imgDataset) := FUNCTION
+        //MNIST dimensions
+        imgRows := 28;
+        imgCols := 28;
+        imgSize := imgRows * imgCols;
+        
+        //Build tensor data
+        tens := NORMALIZE(imgDataset, imgSize, TRANSFORM(TensData,
+                            SELF.indexes := [LEFT.id, (COUNTER-1) DIV imgCols+1, (COUNTER-1) % imgCols +1, 1],
+                            SELF.value := ( (REAL) (>UNSIGNED1<) LEFT.image[counter] )/127.5 - 1 ));
+        RETURN tens;
     END;    
 
     //Take from JPG image dataset to convert to tensor
