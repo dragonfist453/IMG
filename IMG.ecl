@@ -208,4 +208,10 @@ EXPORT IMG := MODULE
 
         RETURN imageDataset;                    
     END;  
+/*
+    //Change format from IMG_NUMERICAL to IMG_FORMAT and encode to get output of jpg once desprayed
+    EXPORT DATASET(IMG_FORMAT) OutputImages(DATASET(IMG_NUMERICAL) imageDataset) := FUNCTION
+
+    END;
+    */
 END; 
