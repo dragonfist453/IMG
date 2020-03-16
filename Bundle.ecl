@@ -3,5 +3,5 @@ EXPORT Bundle := MODULE(Std.BundleBase)
     EXPORT Name := 'IMG';
     EXPORT Description := 'Image input bundle';
     EXPORT Authors := ['Ambu Karthik'];
-    EXPORT Version := '0.7.5';
+    EXPORT Version := '0.8.0';
 END;    

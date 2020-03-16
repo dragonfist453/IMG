@@ -1,6 +1,7 @@
 IMPORT Python3 as Python;
 IMPORT GNN.Tensor;
 TensData := Tensor.R4.TensData;
+#option('outputLimit', 2000);
 
 EXPORT IMG := MODULE
     //IMG module to work with image datasets
@@ -190,10 +191,21 @@ EXPORT IMG := MODULE
         RETURN tens;                    
     END;
 
-    /*
     //Convert tensor data output to Image to send to logical file
-    EXPORT DATASET(IMG_NUMERICAL) TenstoJpg(DATASET(TensData) tens) := FUNCTION
+    EXPORT DATASET(IMG_NUMERICAL) TenstoImg(DATASET(TensData) tens) := FUNCTION
+        //Function to return bytes given Set of tensor
+        DATA giveBytes(SET OF UNSIGNED input) := EMBED(Python)
+            return bytearray(input)
+        ENDEMBED;
 
-    END;
-    */
+        //Number of images is maximum value of 1st index
+        numImages := MAX(tens, tens.indexes[1]);
+
+        //Normalize tensor to change it to IMG_NUMERICAL
+        imageDataset := DATASET(numImages,TRANSFORM(IMG_NUMERICAL,
+                            SELF.id := COUNTER,
+                            SELF.image := giveBytes(SET(tens(indexes[1]=COUNTER),(UNSIGNED)((value+1)*127.5))) ));
+
+        RETURN imageDataset;                    
+    END;  
 END; 
