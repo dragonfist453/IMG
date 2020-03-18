@@ -1,11 +1,10 @@
 IMPORT Python3 as Python;
 IMPORT GNN.Tensor;
 TensData := Tensor.R4.TensData;
-#option('outputLimit', 2000);
 
+//Image module to work with images
 EXPORT IMG := MODULE
-    //IMG module to work with image datasets
-    
+
     //General format of MNIST images
     SHARED IMG_FORMAT_MNIST := RECORD
         UNSIGNED id;
@@ -207,8 +206,31 @@ EXPORT IMG := MODULE
                             SELF.image := giveBytes(SET(tens(indexes[1]=COUNTER),(UNSIGNED)((value+1)*127.5))) ));
 
         RETURN imageDataset;                    
-    END;  
-/*
+    END;
+
+    //Change format from IMG_FORMAT_MNIST to IMG_FORMAT to output as jpg once desprayed
+    EXPORT DATASET(IMG_FORMAT) OutputMNIST(DATASET(IMG_FORMAT_MNIST) mnist) := FUNCTION
+        //Python to create and encode image
+        DATA makeJPG(DATA image) := EMBED(Python)
+            import numpy as np
+            import cv2
+
+            image_np = np.frombuffer(image, dtype=np.uint8)
+            image_mat = image_np.reshape((28,28))
+            img_encode = cv2.imencode('.jpg', image_mat)[1]
+            return bytearray(img_encode)
+        ENDEMBED;
+
+        //Transform IMG_NUMERICAL to IMG_FORMAT with jpg encoding
+        mnist_jpg := PROJECT(mnist, TRANSFORM(IMG_FORMAT,
+                            SELF.filename := LEFT.id + '_mnist.jpg';
+                            SELF.image := makeJPG(LEFT.image);
+                            ));
+        return mnist_jpg;                    
+    END;
+
+
+    /*
     //Change format from IMG_NUMERICAL to IMG_FORMAT and encode to get output of jpg once desprayed
     EXPORT DATASET(IMG_FORMAT) OutputImages(DATASET(IMG_NUMERICAL) imageDataset) := FUNCTION
 

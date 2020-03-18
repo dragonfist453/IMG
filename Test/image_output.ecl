@@ -16,10 +16,16 @@ batchSize := 128;
 //Take MNIST dataset using IMG module
 mnist := IMG.MNIST_train_image();
 
-images := choosen(mnist, 200);
+images := choosen(mnist, 10);
 
 image_tens := IMG.MNISTtoTens(images);
 
 output_images := IMG.TenstoImg(image_tens);
 
-OUTPUT(output_images, ,'~test::image_out_from_tens',OVERWRITE);
+tensimg := OUTPUT(output_images, ,'~test::image_out_from_tens',OVERWRITE);
+
+mnist_jpg := IMG.OutputMNIST(output_images);
+
+jpgimg := OUTPUT(mnist_jpg, ,'~test::mnist_as_jpg',OVERWRITE);
+
+SEQUENTIAL(tensimg, jpgimg);
