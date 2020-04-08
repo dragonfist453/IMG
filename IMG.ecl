@@ -1,4 +1,4 @@
-IMPORT Python3 as Python;
+﻿IMPORT Python3 as Python;
 IMPORT GNN.Tensor;
 TensData := Tensor.R4.TensData;
 
@@ -64,7 +64,7 @@ EXPORT IMG := MODULE
         // Read from the landing zone.  You'll probably have to adjust the file path.  Don't use dash(-) in the
         // file name.  Change the file name to use underscores.   Note the escape characters (^) to indicate capital letters.
         // Otherwise will convert to lower case.
-        mnist := DATASET('~test::mnist_train_images', MNIST_FORMAT, FLAT);
+        mnist := DATASET('~test::mnist_test_images', MNIST_FORMAT, FLAT);
 
         // This will create 60,000 records, each with one image.  The id field indicates the image number
         outRecs0 := NORMALIZE(mnist, numImages, TRANSFORM(IMG_FORMAT_MNIST,
@@ -113,7 +113,7 @@ EXPORT IMG := MODULE
             DATA10000 contents;
         END;
 
-        mnist_labels := DATASET('~test::mnist_train_labelled',MNIST_FORMAT,FLAT);
+        mnist_labels := DATASET('~test::mnist_test_labelled',MNIST_FORMAT,FLAT);
 
         outRecs0 := NORMALIZE(mnist_labels, numImages, TRANSFORM(LABEL_FORMAT_MNIST, 
                                             SELF.label := LEFT.contents[COUNTER],
