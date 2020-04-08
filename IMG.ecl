@@ -209,7 +209,7 @@ EXPORT IMG := MODULE
     END;
 
     //Change format from IMG_FORMAT_MNIST to IMG_FORMAT to output as jpg once desprayed
-    EXPORT DATASET(IMG_FORMAT) OutputMNIST(DATASET(IMG_FORMAT_MNIST) mnist) := FUNCTION
+    EXPORT DATASET(IMG_FORMAT) OutputasJPG(DATASET(IMG_FORMAT_MNIST) mnist) := FUNCTION
         //Python to create and encode image
         DATA makeJPG(DATA image) := EMBED(Python)
             import numpy as np
@@ -229,11 +229,24 @@ EXPORT IMG := MODULE
         return mnist_jpg;                    
     END;
 
+    //Change format from IMG_FORMAT_MNIST to IMG_FORMAT to output as png once desprayed
+    EXPORT DATASET(IMG_FORMAT) OutputasPNG(DATASET(IMG_FORMAT_MNIST) mnist) := FUNCTION
+        //Python to create and encode image
+        DATA makePNG(DATA image) := EMBED(Python)
+            import numpy as np
+            import cv2
 
-    /*
-    //Change format from IMG_NUMERICAL to IMG_FORMAT and encode to get output of jpg once desprayed
-    EXPORT DATASET(IMG_FORMAT) OutputImages(DATASET(IMG_NUMERICAL) imageDataset) := FUNCTION
+            image_np = np.frombuffer(image, dtype=np.uint8)
+            image_mat = image_np.reshape((28,28))
+            img_encode = cv2.imencode('.png', image_mat)[1]
+            return bytearray(img_encode)
+        ENDEMBED;
 
+        //Transform IMG_NUMERICAL to IMG_FORMAT with jpg encoding
+        mnist_png := PROJECT(mnist, TRANSFORM(IMG_FORMAT,
+                            SELF.filename := LEFT.id + '_mnist.png';
+                            SELF.image := makePNG(LEFT.image);
+                            ));
+        return mnist_png;                    
     END;
-    */
 END; 
