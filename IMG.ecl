@@ -284,7 +284,7 @@ EXPORT IMG := MODULE
         return mnist_grid;    
     END;
 
-    //Correcting generator output
+    //Correcting generator output. batchSize can be given as extra parameter if required.
     EXPORT DATASET(TensData) GenCorrect(DATASET(t_Tensor) generated, UNSIGNED4 batchSize = 0) := FUNCTION
         gen_imgs := PROJECT(generated, TRANSFORM(t_Tensor,
                                     SELF.shape := [0]+LEFT.shape[2..4],
