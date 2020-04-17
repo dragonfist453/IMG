@@ -250,30 +250,36 @@ EXPORT IMG := MODULE
         return mnist_png;                    
     END;
 
-    //Print multiple images as a grid of (r,c)
+    //Print multiple images as a grid of (r,c) for easy monitoring of changes
     EXPORT DATASET(IMG_FORMAT) OutputGrid(DATASET(IMG_FORMAT_MNIST) mnist, INTEGER r, INTEGER c, INTEGER epochnum = 1) := FUNCTION
         //Python to create grid and return image
-        DATA makeGrid(DATA image) := EMBED(Python)
+        DATA makeGrid(SET OF DATA images, Integer r, Integer c) := EMBED(Python)
             import matplotlib.pyplot as plt
+            import numpy as np
+            import cv2
             fig, axs = plt.subplots(r, c)
             cnt = 0
             for i in range(r):
                 for j in range(c):
-                    axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
+                    image = images[cnt]
+                    image_np = np.frombuffer(image, dtype=np.uint8)
+                    image_mat = image_np.reshape((28,28))
+                    axs[i,j].imshow(image_mat[:,:], cmap='gray')
                     axs[i,j].axis('off')
                     cnt += 1
+            fig.canvas.draw()        
             image_from_plot = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
             image_from_plot = image_from_plot.reshape(fig.canvas.get_width_height()[::-1] + (3,))  
             plt.close()  
-            img_encode = cv2.imencode('.png', image_mat)[1]
+            img_encode = cv2.imencode('.png', image_from_plot)[1]
             return bytearray(img_encode)
         ENDEMBED;
 
         //Transform IMG_NUMERICAL to IMG_FORMAT with jpg encoding
-        mnist_png := PROJECT(mnist, TRANSFORM(IMG_FORMAT,
+        mnist_grid := DATASET(1, TRANSFORM(IMG_FORMAT,
                             SELF.filename := 'Epoch_'+epochnum+'.png',
-                            SELF.image := makeGrid(LEFT.image)
+                            SELF.image := makeGrid(SET(mnist, image), r, c)
                             ));
-        return mnist_png;    
+        return mnist_grid;    
     END;
 END; 
