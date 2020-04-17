@@ -1,6 +1,7 @@
 ﻿IMPORT Python3 as Python;
 IMPORT GNN.Tensor;
 TensData := Tensor.R4.TensData;
+t_Tensor := Tensor.R4.t_Tensor;
 
 //Image module to work with images
 EXPORT IMG := MODULE
@@ -281,5 +282,21 @@ EXPORT IMG := MODULE
                             SELF.image := makeGrid(SET(mnist, image), r, c)
                             ));
         return mnist_grid;    
+    END;
+
+    //Correcting generator output
+    EXPORT DATASET(TensData) GenCorrect(DATASET(t_Tensor) generated, UNSIGNED4 batchSize = 0) := FUNCTION
+        gen_imgs := PROJECT(generated, TRANSFORM(t_Tensor,
+                                    SELF.shape := [0]+LEFT.shape[2..4],
+                                    SELF.sliceid := LEFT.wi,
+                                    SELF.wi := 1,
+                                    SELF := LEFT
+                                    ));
+        generated_data := Tensor.R4.GetData(gen_imgs);
+        gen_data := PROJECT(generated_data, TRANSFORM(TensData,
+                                        SELF.indexes := [(COUNTER-1) DIV 784 + 1 + batchSize, LEFT.indexes[2..4] ],
+                                        SELF := LEFT
+                                        ));
+        return gen_data;
     END;
 END; 
