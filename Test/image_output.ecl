@@ -24,7 +24,7 @@ output_images := IMG.TenstoImg(image_tens);
 
 tensimg := OUTPUT(output_images, ,'~test::image_out_from_tens',OVERWRITE);
 
-mnist_jpg := IMG.OutputMNIST(output_images);
+mnist_jpg := IMG.OUTPUTasjpg(output_images);
 
 jpgimg := OUTPUT(mnist_jpg, ,'~test::mnist_as_jpg',OVERWRITE);
 

@@ -249,4 +249,31 @@ EXPORT IMG := MODULE
                             ));
         return mnist_png;                    
     END;
+
+    //Print multiple images as a grid of (r,c)
+    EXPORT DATASET(IMG_FORMAT) OutputGrid(DATASET(IMG_FORMAT_MNIST) mnist, INTEGER r, INTEGER c, INTEGER epochnum = 1) := FUNCTION
+        //Python to create grid and return image
+        DATA makeGrid(DATA image) := EMBED(Python)
+            import matplotlib.pyplot as plt
+            fig, axs = plt.subplots(r, c)
+            cnt = 0
+            for i in range(r):
+                for j in range(c):
+                    axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
+                    axs[i,j].axis('off')
+                    cnt += 1
+            image_from_plot = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
+            image_from_plot = image_from_plot.reshape(fig.canvas.get_width_height()[::-1] + (3,))  
+            plt.close()  
+            img_encode = cv2.imencode('.png', image_mat)[1]
+            return bytearray(img_encode)
+        ENDEMBED;
+
+        //Transform IMG_NUMERICAL to IMG_FORMAT with jpg encoding
+        mnist_png := PROJECT(mnist, TRANSFORM(IMG_FORMAT,
+                            SELF.filename := 'Epoch_'+epochnum+'.png',
+                            SELF.image := makeGrid(LEFT.image)
+                            ));
+        return mnist_png;    
+    END;
 END; 
