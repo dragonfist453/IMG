@@ -243,7 +243,7 @@ EXPORT IMG := MODULE
             return bytearray(img_encode)
         ENDEMBED;
 
-        //Transform IMG_NUMERICAL to IMG_FORMAT with jpg encoding
+        //Transform IMG_NUMERICAL to IMG_FORMAT with png encoding
         mnist_png := PROJECT(mnist, TRANSFORM(IMG_FORMAT,
                             SELF.filename := LEFT.id + '_mnist.png';
                             SELF.image := makePNG(LEFT.image);
@@ -258,6 +258,7 @@ EXPORT IMG := MODULE
             import matplotlib.pyplot as plt
             import numpy as np
             import cv2
+
             fig, axs = plt.subplots(r, c)
             cnt = 0
             for i in range(r):
@@ -276,7 +277,7 @@ EXPORT IMG := MODULE
             return bytearray(img_encode)
         ENDEMBED;
 
-        //Transform IMG_NUMERICAL to IMG_FORMAT with jpg encoding
+        //Transform IMG_NUMERICAL to IMG_FORMAT with grid format and png encoding
         mnist_grid := DATASET(1, TRANSFORM(IMG_FORMAT,
                             SELF.filename := 'Epoch_'+epochnum+'.png',
                             SELF.image := makeGrid(SET(mnist, image), r, c)
@@ -286,15 +287,26 @@ EXPORT IMG := MODULE
 
     //Correcting generator output. batchSize can be given as extra parameter if required.
     EXPORT DATASET(TensData) GenCorrect(DATASET(t_Tensor) generated, UNSIGNED4 batchSize = 0) := FUNCTION
+        //Transforms the generated data so that all of the tensors are in same workunit and multiple images may be obtained with GetData
         gen_imgs := PROJECT(generated, TRANSFORM(t_Tensor,
                                     SELF.shape := [0]+LEFT.shape[2..4],
                                     SELF.sliceid := LEFT.wi,
                                     SELF.wi := 1,
                                     SELF := LEFT
                                     ));
+
+        //Get the generated images 
         generated_data := Tensor.R4.GetData(gen_imgs);
+
+        //Calculations for the output data to transform to tensor
+        imagerows := MAX(gen_out, indexes[2]); 
+        imagecols := MAX(gen_out, indexes[3]);
+        imagechannels := MAX(gen_out, indexes[4]);
+        dim := imagerows*imagecols*imagechannels;
+
+        //Transform the generated data to produce appropriate indexes. The LEFT indexes are of the form 1, 101, 201 and so on. To change all those to meaningful indices.
         gen_data := PROJECT(generated_data, TRANSFORM(TensData,
-                                        SELF.indexes := [(COUNTER-1) DIV 784 + 1 + batchSize, LEFT.indexes[2..4] ],
+                                        SELF.indexes := [(COUNTER-1) DIV dim + 1 + batchSize, LEFT.indexes[2..4] ],
                                         SELF := LEFT
                                         ));
         return gen_data;
