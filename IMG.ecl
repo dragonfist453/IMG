@@ -286,27 +286,13 @@ EXPORT IMG := MODULE
     END;
 
     //Correcting generator output. batchSize can be given as extra parameter if required.
-    EXPORT DATASET(TensData) GenCorrect(DATASET(t_Tensor) generated, UNSIGNED4 batchSize,UNSIGNED4 batchOffset = 0) := FUNCTION
-        //Transforms the generated data so that all of the tensors are in same workunit and multiple images may be obtained with GetData
-        gen_imgs := PROJECT(generated, TRANSFORM(t_Tensor,
-                                    SELF.shape := [0]+LEFT.shape[2..4],
-                                    SELF.sliceid := LEFT.wi,
-                                    SELF.wi := 1,
-                                    SELF := LEFT
-                                    ));
-
+    EXPORT DATASET(TensData) GenCorrect(DATASET(t_Tensor) generated, UNSIGNED4 batchOffset = 0) := FUNCTION
         //Get the generated images 
-        generated_data := Tensor.R4.GetData(gen_imgs);
-
-        //Calculations for the output data to transform to tensor
-        imagerows := MAX(generated_data, indexes[2]); 
-        imagecols := MAX(generated_data, indexes[3]);
-        imagechannels := MAX(generated_data, indexes[4]);
-        dim := imagerows*imagecols*imagechannels;
+        generated_data := Tensor.R4.GetData(generated);
 
         //Transform the generated data to produce appropriate indexes. The LEFT indexes are of the form 1, 101, 201 and so on. To change all those to meaningful indices.
         gen_data := PROJECT(generated_data, TRANSFORM(TensData,
-                                        SELF.indexes := [LEFT.indexes[1]/batchSize + 1 + batchOffset, LEFT.indexes[2..4] ],
+                                        SELF.indexes := [LEFT.indexes[1] + batchOffset, LEFT.indexes[2..4] ],
                                         SELF := LEFT
                                         ));
         return gen_data;
